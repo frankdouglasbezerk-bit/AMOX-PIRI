@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { LogIn, LayoutDashboard, Package, PlusCircle, LogOut, Truck, Settings, Calendar as CalendarIcon, ShieldCheck, MessageSquare, ExternalLink, ClipboardList, FileText, ReceiptText, User as UserIcon, Users as UsersIcon } from 'lucide-react';
+import { LogIn, LayoutDashboard, Package, PlusCircle, LogOut, Truck, Settings, Calendar as CalendarIcon, ShieldCheck, MessageSquare, ClipboardList, FileText, ReceiptText, User as UserIcon, Users as UsersIcon, Cpu, Zap, Send, Lock, UserCircle, HardHat } from 'lucide-react';
 import { User, ViewState, StockItem, Machine, CalendarEvent, RequestItem, MovementRecord } from './types';
 import Dashboard from './components/Dashboard';
 import InventoryTable from './components/InventoryTable';
@@ -8,16 +8,15 @@ import StockEntry from './components/StockEntry';
 import MovementView from './components/MovementView';
 import CalendarView from './components/CalendarView';
 import RequestsManager from './components/RequestsManager';
-import PublicPortal from './components/PublicPortal';
 import MovementLog from './components/MovementLog';
 import InvoicesLog from './components/InvoicesLog';
 import ReceiptsView from './components/ReceiptsView';
 import AccessManager from './components/AccessManager';
 
 const INITIAL_USERS: Record<string, {password: string, role: 'admin' | 'user'}> = {
-  'ITALO': { password: '2026', role: 'user' },
-  'MICHAEL': { password: '2026', role: 'user' },
-  'ADM': { password: '12345678910', role: 'admin' }
+  'ADM': { password: '2000', role: 'admin' },
+  'ITALO': { password: '2026', role: 'admin' },
+  'MICHAEL': { password: '2026', role: 'admin' }
 };
 
 const App: React.FC = () => {
@@ -30,8 +29,11 @@ const App: React.FC = () => {
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [movementHistory, setMovementHistory] = useState<MovementRecord[]>([]);
   const [usersDatabase, setUsersDatabase] = useState<Record<string, {password: string, role: 'admin' | 'user'}>>(INITIAL_USERS);
-  const [isPublicMode, setIsPublicMode] = useState(false);
   const [loginError, setLoginError] = useState('');
+  
+  // States para a nova Barra de Solicitação de Campo
+  const [fieldReqName, setFieldReqName] = useState('');
+  const [fieldReqMaterial, setFieldReqMaterial] = useState('');
 
   useEffect(() => {
     const savedInv = localStorage.getItem('amox_inventory');
@@ -46,7 +48,13 @@ const App: React.FC = () => {
     if (savedEve) setEvents(JSON.parse(savedEve));
     if (savedReq) setRequests(JSON.parse(savedReq));
     if (savedHistory) setMovementHistory(JSON.parse(savedHistory));
-    if (savedUsers) setUsersDatabase(JSON.parse(savedUsers));
+    
+    if (savedUsers) {
+      const parsed = JSON.parse(savedUsers);
+      setUsersDatabase({ ...parsed, ...INITIAL_USERS });
+    } else {
+      setUsersDatabase(INITIAL_USERS);
+    }
   }, []);
 
   useEffect(() => {
@@ -61,8 +69,8 @@ const App: React.FC = () => {
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const username = (formData.get('username') as string).toUpperCase();
-    const password = formData.get('password') as string;
+    const username = (formData.get('username') as string).toUpperCase().trim();
+    const password = (formData.get('password') as string).trim();
 
     const dbUser = usersDatabase[username];
 
@@ -73,92 +81,210 @@ const App: React.FC = () => {
       setShowGreeting(true);
       setTimeout(() => setShowGreeting(false), 2000);
     } else {
-      setLoginError('Usuário ou senha inválidos.');
+      setLoginError('ACESSO NEGADO: VERIFIQUE SUAS CREDENCIAIS');
     }
   };
 
-  if (isPublicMode) {
-    return <PublicPortal onBack={() => setIsPublicMode(false)} onAddRequest={(req) => setRequests([...requests, req])} />;
-  }
+  const handleFieldRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fieldReqName.trim() || !fieldReqMaterial.trim()) return;
+
+    const newRequest: RequestItem = {
+      id: `REQ-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+      requesterName: fieldReqName.toUpperCase(),
+      itemDescription: fieldReqMaterial.toUpperCase(),
+      date: new Date().toLocaleString('pt-BR'),
+      status: 'Pendente'
+    };
+
+    setRequests(prev => [newRequest, ...prev]);
+    setFieldReqName('');
+    setFieldReqMaterial('');
+    alert("SOLICITAÇÃO ENVIADA COM SUCESSO AO ADM.");
+  };
 
   if (showGreeting && user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0c10] text-white animate-fadeIn">
-        <div className="bg-amber-600/10 p-8 rounded-[3rem] border border-amber-600/20 mb-8 animate-bounce">
-            <UserIcon size={80} className="text-amber-600" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-white animate-pulse overflow-hidden">
+        <div className="relative">
+          <div className="absolute inset-0 blur-[120px] bg-amber-600/20 rounded-full"></div>
+          <div className="relative glass p-20 rounded-full border border-amber-600/30 mb-10">
+            <Cpu size={120} className="text-amber-500" />
+          </div>
         </div>
-        <h1 className="text-5xl font-black uppercase tracking-tighter mb-2">Olá, {user.username}!</h1>
-        <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-sm">Acessando sistema...</p>
+        <h1 className="text-5xl font-black uppercase tracking-[0.4em] mb-4">AUTENTICADO</h1>
+        <p className="mono text-amber-500/60 font-bold uppercase tracking-[0.5em] text-xs">OPERADOR: {user.username}</p>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0c10] px-4 font-sans">
-        <div className="max-w-md w-full bg-[#12151c] rounded-[2rem] shadow-2xl border border-white/5">
-          <div className="p-10 text-white text-center border-b border-white/5">
-            <div className="bg-amber-600/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-amber-600/30">
-              <ShieldCheck size={40} className="text-amber-600" />
-            </div>
-            <h1 className="text-2xl font-black uppercase tracking-tighter">AMOX PIRI</h1>
-            <p className="text-slate-500 mt-1 text-[10px] font-black tracking-widest uppercase">Gestão de Estoque</p>
-          </div>
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-start p-6 selection:bg-amber-500 selection:text-black font-sans relative overflow-y-auto">
+        {/* Camada Decorativa de Background */}
+        <div className="fixed inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+        
+        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10 py-12 md:py-24">
           
-          <form onSubmit={handleLogin} className="p-10 space-y-5">
-            {loginError && <p className="text-red-500 text-xs text-center font-bold">{loginError}</p>}
-            <input name="username" type="text" required className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-amber-600 uppercase font-bold" placeholder="USUÁRIO" />
-            <input name="password" type="password" required className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-amber-600 font-bold" placeholder="SENHA" />
-            <button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-4 rounded-xl uppercase tracking-widest text-xs transition-all">ENTRAR</button>
-          </form>
+          {/* LADO ESQUERDO: TERMINAL DE LOGIN ADM */}
+          <div className="space-y-8 flex flex-col justify-center">
+            <div className="space-y-4">
+               <div className="inline-flex items-center gap-3 bg-amber-600/10 px-4 py-2 rounded-full border border-amber-500/20">
+                  <ShieldCheck size={16} className="text-amber-500" />
+                  <span className="mono text-[10px] font-black text-amber-500 uppercase tracking-widest">Acesso Administrativo</span>
+               </div>
+               <h1 className="text-7xl font-black text-white tracking-tighter uppercase leading-[0.85]">AMOX<br/><span className="text-amber-600">PIRI</span></h1>
+               <p className="text-slate-500 font-bold text-sm max-w-sm uppercase tracking-tight">Sistema de Gerenciamento de Estoque e Logística de Obras v4.0</p>
+            </div>
 
-          <div className="p-6 text-center">
-            <button onClick={() => setIsPublicMode(true)} className="text-[10px] font-black text-amber-600 hover:text-white transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mx-auto">
-              <ExternalLink size={14} /> Fazer Pedido Externo
-            </button>
+            <div className="glass p-10 rounded-[3rem] border border-white/5 relative overflow-hidden group">
+              <div className="scanner !opacity-5"></div>
+              <form onSubmit={handleLogin} className="space-y-6">
+                {loginError && (
+                  <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl">
+                    <p className="text-red-500 text-[10px] font-black mono text-center uppercase">{loginError}</p>
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <div className="relative group/input">
+                    <UserCircle className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within/input:text-amber-500 transition-colors" size={20} />
+                    <input name="username" type="text" required className="w-full pl-16 pr-8 py-5 bg-white/[0.03] border border-white/5 rounded-2xl text-white outline-none focus:border-amber-500/50 uppercase font-black mono text-xs transition-all" placeholder="USUÁRIO" />
+                  </div>
+                  <div className="relative group/input">
+                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within/input:text-amber-500 transition-colors" size={20} />
+                    <input name="password" type="password" required className="w-full pl-16 pr-8 py-5 bg-white/[0.03] border border-white/5 rounded-2xl text-white outline-none focus:border-amber-500/50 font-black mono text-xs transition-all" placeholder="SENHA" />
+                  </div>
+                </div>
+                <button type="submit" className="neo-button w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-6 rounded-2xl uppercase tracking-[0.3em] text-xs transition-all shadow-2xl shadow-amber-900/40">
+                  ENTRAR NO SISTEMA
+                </button>
+              </form>
+            </div>
           </div>
+
+          {/* LADO DIREITO: SOLICITAÇÃO DE MATERIAL VINCULADA */}
+          <div className="flex flex-col justify-center">
+             <div className="bg-[#101216] p-12 rounded-[4rem] border border-white/5 shadow-2xl space-y-10 relative overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-600/5 blur-3xl rounded-full"></div>
+                
+                <div className="space-y-2">
+                   <div className="flex items-center gap-4 mb-4">
+                      <div className="bg-white/5 p-4 rounded-2xl">
+                         <MessageSquare size={28} className="text-amber-500" />
+                      </div>
+                      <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Central de Pedidos</h2>
+                   </div>
+                   <p className="text-slate-500 text-sm font-bold uppercase tracking-tight">Equipes de campo: Solicite materiais aqui sem precisar de login.</p>
+                </div>
+
+                <form onSubmit={handleFieldRequest} className="space-y-6">
+                   <div className="space-y-4">
+                      <div className="relative">
+                         <UserIcon className="absolute left-6 top-5 text-slate-700" size={18} />
+                         <input 
+                           value={fieldReqName}
+                           onChange={e => setFieldReqName(e.target.value)}
+                           className="w-full pl-16 pr-8 py-5 bg-black/40 border border-white/10 rounded-2xl text-white outline-none focus:border-amber-500/50 uppercase font-bold text-xs" 
+                           placeholder="NOME DO COLABORADOR OU EQUIPE"
+                           required
+                         />
+                      </div>
+                      <div className="relative">
+                         <HardHat className="absolute left-6 top-5 text-slate-700" size={18} />
+                         <textarea 
+                           value={fieldReqMaterial}
+                           onChange={e => setFieldReqMaterial(e.target.value)}
+                           className="w-full pl-16 pr-8 py-5 bg-black/40 border border-white/10 rounded-2xl text-white outline-none focus:border-amber-500/50 uppercase font-bold text-xs h-32 resize-none" 
+                           placeholder="DESCREVA O MATERIAL E QUANTIDADE..."
+                           required
+                         />
+                      </div>
+                   </div>
+
+                   <button type="submit" className="group w-full flex items-center justify-center gap-4 bg-white/[0.02] hover:bg-amber-600 border border-white/10 hover:border-amber-500 py-6 rounded-3xl transition-all text-white">
+                      <span className="text-xs font-black uppercase tracking-[0.2em]">Enviar Solicitação ao ADM</span>
+                      <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                   </button>
+                   
+                   <p className="text-center text-[9px] font-black text-slate-600 uppercase tracking-[0.3em]">O pedido será enviado para Italo ou Michael.</p>
+                </form>
+             </div>
+          </div>
+        </div>
+
+        {/* CRÉDITOS DOUG */}
+        <div className="relative pb-12 w-full flex justify-center">
+           <div className="glass px-8 py-2 rounded-full border border-white/5">
+              <span className="mono text-[10px] font-black text-white/20 uppercase tracking-[1em] ml-[1em]">BY: DOUG</span>
+           </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1115] flex flex-col md:flex-row text-slate-300">
-      <nav className="w-full md:w-72 bg-[#161a21] border-r border-white/5 flex flex-col shrink-0 sticky top-0 h-screen z-50">
-        <div className="p-8 border-b border-white/5 flex items-center gap-4">
-          <div className="bg-amber-600 p-2.5 rounded-xl"><Package className="text-white" size={24} /></div>
-          <div><span className="font-black text-white tracking-tighter text-xl block leading-none">AMOX PIRI</span><span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">SGE v2.0</span></div>
+    <div className="min-h-screen bg-[#050505] flex flex-col md:flex-row text-slate-300">
+      <nav className="w-full md:w-80 glass border-r border-white/5 flex flex-col shrink-0 sticky top-0 h-screen z-50 overflow-hidden">
+        <div className="p-10 border-b border-white/5 flex items-center gap-5">
+          <div className="bg-amber-600 p-3 rounded-2xl shadow-lg shadow-amber-900/40"><Package className="text-white" size={26} /></div>
+          <div>
+            <span className="font-black text-white tracking-tighter text-2xl block leading-none">AMOX PIRI</span>
+            <span className="mono text-[9px] font-black text-amber-500 uppercase tracking-[0.3em] mt-1 block">Industrial SGE</span>
+          </div>
         </div>
-        <div className="flex-1 p-6 space-y-2 overflow-y-auto custom-scrollbar">
-          <NavItem icon={<LayoutDashboard size={20} />} label="Início" active={activeView === ViewState.DASHBOARD} onClick={() => setActiveView(ViewState.DASHBOARD)} />
-          <NavItem icon={<Package size={20} />} label="Estoque" active={activeView === ViewState.INVENTORY} onClick={() => setActiveView(ViewState.INVENTORY)} />
-          <NavItem icon={<MessageSquare size={20} />} label="Pedidos" active={activeView === ViewState.REQUESTS} onClick={() => setActiveView(ViewState.REQUESTS)} count={requests.filter(r => r.status === 'Pendente').length} />
-          <NavItem icon={<ClipboardList size={20} />} label="Histórico" active={activeView === ViewState.MOVEMENT_LOG} onClick={() => setActiveView(ViewState.MOVEMENT_LOG)} />
-          <NavItem icon={<FileText size={20} />} label="Notas" active={activeView === ViewState.INVOICES} onClick={() => setActiveView(ViewState.INVOICES)} />
-          <NavItem icon={<ReceiptText size={20} />} label="Recibos" active={activeView === ViewState.RECEIPTS} onClick={() => setActiveView(ViewState.RECEIPTS)} />
+        
+        <div className="flex-1 p-8 space-y-3 overflow-y-auto custom-scrollbar">
+          <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.4em] mb-4 ml-4">Monitoramento</p>
+          <NavItem icon={<LayoutDashboard size={20} />} label="Terminal" active={activeView === ViewState.DASHBOARD} onClick={() => setActiveView(ViewState.DASHBOARD)} />
+          <NavItem icon={<Package size={20} />} label="Inventário" active={activeView === ViewState.INVENTORY} onClick={() => setActiveView(ViewState.INVENTORY)} />
+          <NavItem icon={<MessageSquare size={20} />} label="Solicitações" active={activeView === ViewState.REQUESTS} onClick={() => setActiveView(ViewState.REQUESTS)} count={requests.filter(r => r.status === 'Pendente').length} />
+          
+          <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.4em] mt-8 mb-4 ml-4">Logística</p>
+          <NavItem icon={<CalendarIcon size={20} />} label="Agenda de Obras" active={activeView === ViewState.CALENDAR} onClick={() => setActiveView(ViewState.CALENDAR)} />
+          <NavItem icon={<ClipboardList size={20} />} label="Data Logs" active={activeView === ViewState.MOVEMENT_LOG} onClick={() => setActiveView(ViewState.MOVEMENT_LOG)} />
+          <NavItem icon={<FileText size={20} />} label="Relatórios" active={activeView === ViewState.INVOICES} onClick={() => setActiveView(ViewState.INVOICES)} />
+          <NavItem icon={<ReceiptText size={20} />} label="Protocolos" active={activeView === ViewState.RECEIPTS} onClick={() => setActiveView(ViewState.RECEIPTS)} />
+          
           {user.role === 'admin' && (
             <>
-              <div className="h-px bg-white/5 my-4"></div>
-              <NavItem icon={<UsersIcon size={20} />} label="Gerenciar Acesso" active={activeView === ViewState.MANAGE_ACCESS} onClick={() => setActiveView(ViewState.MANAGE_ACCESS)} />
+              <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.4em] mt-8 mb-4 ml-4">Root Access</p>
+              <NavItem icon={<UsersIcon size={20} />} label="Acessos" active={activeView === ViewState.MANAGE_ACCESS} onClick={() => setActiveView(ViewState.MANAGE_ACCESS)} />
               <NavItem icon={<PlusCircle size={20} />} label="Carga em Lote" active={activeView === ViewState.ADD_ITEMS} onClick={() => setActiveView(ViewState.ADD_ITEMS)} />
             </>
           )}
-          <div className="h-px bg-white/5 my-4"></div>
-          <NavItem icon={<Truck size={20} />} label="Retirada/Entrada" active={activeView === ViewState.MOV_MATERIAL} onClick={() => setActiveView(ViewState.MOV_MATERIAL)} />
-        </div>
-        <div className="p-6 border-t border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-             <div className="w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center font-black text-white text-xs">{user.username.charAt(0)}</div>
-             <span className="text-xs font-black text-white">{user.username}</span>
+          
+          <div className="pt-8 pb-12">
+            <button 
+              onClick={() => setActiveView(ViewState.MOV_MATERIAL)}
+              className={`w-full flex items-center gap-4 px-6 py-5 rounded-2xl transition-all font-black text-xs uppercase tracking-[0.15em] border ${activeView === ViewState.MOV_MATERIAL ? 'bg-amber-600 text-white shadow-xl shadow-amber-900/30 border-amber-500' : 'bg-white/5 text-amber-500 border-amber-600/20 hover:bg-amber-600/10'}`}
+            >
+              <Truck size={20} /> Movimentar
+            </button>
           </div>
-          <button onClick={() => setUser(null)} className="text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-all"><LogOut size={18} /></button>
+        </div>
+
+        <div className="p-8 border-t border-white/5 bg-black/20 flex flex-col gap-6 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center font-black text-white shadow-lg">{user.username.charAt(0)}</div>
+               <div className="flex flex-col">
+                 <span className="text-xs font-black text-white tracking-tight uppercase">{user.username}</span>
+                 <span className="mono text-[8px] text-slate-500 uppercase">{user.role} active</span>
+               </div>
+            </div>
+            <button onClick={() => setUser(null)} className="text-slate-600 hover:text-red-500 hover:bg-red-500/10 p-3 rounded-xl transition-all"><LogOut size={20} /></button>
+          </div>
+          <div className="text-center">
+            <p className="mono text-[9px] font-black text-white/10 uppercase tracking-[0.6em]">BY: DOUG</p>
+          </div>
         </div>
       </nav>
 
-      <main className="flex-1 overflow-auto bg-[#0a0c10] p-6 md:p-10">
-          {activeView === ViewState.DASHBOARD && <Dashboard inventory={inventory} setView={setActiveView} user={user} />}
+      <main className="flex-1 overflow-y-auto p-8 md:p-16 custom-scrollbar">
+          {activeView === ViewState.DASHBOARD && <Dashboard inventory={inventory} setView={setActiveView} user={user} setRequests={setRequests} />}
           {activeView === ViewState.INVENTORY && <InventoryTable inventory={inventory} setInventory={setInventory} user={user} />}
           {activeView === ViewState.REQUESTS && <RequestsManager requests={requests} setRequests={setRequests} user={user} />}
+          {activeView === ViewState.CALENDAR && <CalendarView events={events} setEvents={setEvents} user={user} />}
           {activeView === ViewState.MOVEMENT_LOG && <MovementLog history={movementHistory} setHistory={setMovementHistory} user={user} />}
           {activeView === ViewState.INVOICES && <InvoicesLog history={movementHistory} setHistory={setMovementHistory} user={user} />}
           {activeView === ViewState.RECEIPTS && <ReceiptsView history={movementHistory} setHistory={setMovementHistory} user={user} />}
@@ -171,9 +297,12 @@ const App: React.FC = () => {
 };
 
 const NavItem = ({ icon, label, active, onClick, count }: any) => (
-  <button onClick={onClick} className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider ${active ? 'bg-amber-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}>
-    <div className="flex items-center gap-3">{icon}<span>{label}</span></div>
-    {count !== undefined && count > 0 && <span className="bg-red-500 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center">{count}</span>}
+  <button onClick={onClick} className={`w-full group flex items-center justify-between px-6 py-4 rounded-2xl transition-all ${active ? 'bg-white/10 text-white border border-white/10 shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
+    <div className="flex items-center gap-4">
+      <div className={`transition-colors ${active ? 'text-amber-500' : 'group-hover:text-amber-500'}`}>{icon}</div>
+      <span className="text-[11px] font-bold uppercase tracking-[0.1em]">{label}</span>
+    </div>
+    {count !== undefined && count > 0 && <span className="bg-amber-600 text-white text-[9px] w-5 h-5 rounded-lg flex items-center justify-center font-black animate-pulse">{count}</span>}
   </button>
 );
 

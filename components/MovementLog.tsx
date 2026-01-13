@@ -24,9 +24,9 @@ const MovementLog: React.FC<MovementLogProps> = ({ history, setHistory, user }) 
       return;
     }
 
-    const password = prompt("AUTENTICAÇÃO DE SEGURANÇA:\nDigite a SENHA DO ADM para apagar este registro do histórico:");
+    const password = prompt("AUTENTICAÇÃO DE SEGURANÇA:\nDigite a SENHA DO ADM (2000) para apagar este registro do histórico:");
     
-    if (password === '12345678910') {
+    if (password === '2000') {
       if (confirm('Deseja realmente apagar este registro de movimentação? Isso não reverte o saldo do estoque, apenas remove do histórico.')) {
         setHistory(prev => prev.filter(h => h.id !== id));
       }
@@ -35,9 +35,9 @@ const MovementLog: React.FC<MovementLogProps> = ({ history, setHistory, user }) 
     }
   };
 
-  // Resumo por acesso (Italo, Michael, ADM)
-  const users = ['ITALO', 'MICHAEL', 'ADM'];
-  const summary = users.map(u => {
+  // Identifica todos os usuários presentes no histórico para o resumo
+  const uniqueUsers = Array.from(new Set(history.map(h => h.userId.toUpperCase())));
+  const summary = uniqueUsers.map(u => {
     const userMoves = history.filter(h => h.userId.toUpperCase() === u);
     const totalIn = userMoves.filter(h => h.type === 'Entrada').reduce((acc, h) => acc + h.quantity, 0);
     const totalOut = userMoves.filter(h => h.type === 'Saída').reduce((acc, h) => acc + h.quantity, 0);
@@ -64,7 +64,6 @@ const MovementLog: React.FC<MovementLogProps> = ({ history, setHistory, user }) 
         </div>
       </div>
 
-      {/* QUADRO DE ACESSO - RESUMO DOS 3 USUÁRIOS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {summary.map(item => (
           <div key={item.user} className="bg-[#161a21] p-6 rounded-[2rem] border border-white/5 shadow-xl">

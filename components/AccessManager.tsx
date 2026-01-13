@@ -15,10 +15,11 @@ const AccessManager: React.FC<AccessManagerProps> = ({ usersDatabase, setUsersDa
   const [newRole, setNewRole] = useState<'admin' | 'user'>('user');
   const [showAddForm, setShowAddForm] = useState(false);
   
-  const MASTER_PASSWORD = '12345678910';
+  // Senha Master agora é 2000 conforme solicitado para o ADM
+  const MASTER_PASSWORD = '2000';
 
   const validateMaster = () => {
-    const pass = prompt("SEGURANÇA ADM:\nDigite a SENHA MASTER para autorizar esta alteração:");
+    const pass = prompt("SEGURANÇA ADM:\nDigite a SENHA DO ADM (2000) para autorizar esta alteração:");
     return pass === MASTER_PASSWORD;
   };
 

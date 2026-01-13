@@ -3,18 +3,18 @@ import React, { useState } from 'react';
 import { ReceiptText, Search, Printer, ArrowLeft, ShieldCheck, Calendar, Trash2, Download, FileText, User as UserIcon, FileCheck, Share2 } from 'lucide-react';
 import { MovementRecord, User as UserType } from '../types';
 
-interface ReceiptsViewProps {
-  history: MovementRecord[];
-  setHistory?: React.Dispatch<React.SetStateAction<MovementRecord[]>>;
-  user?: UserType;
-}
-
 interface GroupedReceipt {
   batchId: string;
   date: string;
   recipient: string;
   userId: string;
   items: MovementRecord[];
+}
+
+interface ReceiptsViewProps {
+  history: MovementRecord[];
+  setHistory?: React.Dispatch<React.SetStateAction<MovementRecord[]>>;
+  user?: UserType;
 }
 
 const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }) => {
@@ -39,7 +39,6 @@ const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }
     return acc;
   }, {} as Record<string, GroupedReceipt>);
 
-  // Fixed Error: Type 'unknown[]' is not assignable to type 'GroupedReceipt[]'.
   const receiptList: GroupedReceipt[] = (Object.values(groupedReceipts) as GroupedReceipt[]).reverse();
 
   const filteredReceipts = receiptList.filter(r => 
@@ -61,9 +60,9 @@ const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }
       return;
     }
     
-    const password = prompt("AUTENTICAÇÃO DE SEGURANÇA:\nDigite a SENHA DO ADM para apagar este recibo:");
+    const password = prompt("AUTENTICAÇÃO DE SEGURANÇA:\nDigite a SENHA DO ADM (2000) para apagar este recibo:");
     
-    if (password === '12345678910') {
+    if (password === '2000') {
       if (confirm('AVISO: Esta ação é permanente. Deseja excluir este recibo do histórico?')) {
         if (setHistory) {
           setHistory(prev => prev.filter(record => (record.batchId || record.id) !== batchId));
@@ -75,7 +74,6 @@ const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }
     }
   };
 
-  // TELA DE DOCUMENTO (REDIRECIONAMENTO INTERNO)
   if (activeReceipt) {
     return (
       <div className="fixed inset-0 z-[200] bg-white overflow-y-auto animate-fadeIn select-none">
@@ -96,7 +94,6 @@ const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }
           `}
         </style>
 
-        {/* Header de Controle (Oculto na Impressão) */}
         <div className="no-print bg-[#0f1115] border-b border-white/10 p-4 sticky top-0 flex flex-col md:flex-row items-center justify-between gap-4 shadow-2xl">
           <button 
             onClick={() => setSelectedBatchId(null)}
@@ -121,10 +118,7 @@ const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }
           </div>
         </div>
 
-        {/* Página do Recibo (Layout A4) */}
         <div className="receipt-page bg-white max-w-4xl mx-auto my-8 p-12 md:p-20 shadow-2xl border-t-[16px] border-amber-600 text-slate-900 font-sans min-h-[1123px]">
-          
-          {/* Cabeçalho Profissional */}
           <div className="flex flex-col md:flex-row justify-between items-start border-b-4 border-slate-900 pb-12 mb-12 gap-8">
             <div className="space-y-3">
               <div className="flex items-center gap-4">
@@ -148,12 +142,10 @@ const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }
             </div>
           </div>
 
-          {/* Título do Documento */}
           <div className="bg-slate-900 text-white text-center py-4 mb-12">
             <h2 className="text-xl font-black uppercase tracking-[0.5em]">Guia de Retirada de Material</h2>
           </div>
 
-          {/* Dados do Recebedor */}
           <div className="bg-amber-50 border-l-[10px] border-amber-500 p-10 mb-12 space-y-6">
             <h3 className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Informações do Destinatário</h3>
             <div className="flex flex-col md:flex-row gap-12">
@@ -172,7 +164,6 @@ const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }
             </div>
           </div>
 
-          {/* Tabela de Materiais */}
           <div className="mb-16 border-4 border-slate-900 overflow-hidden">
             <table className="w-full text-left">
               <thead className="bg-slate-900 text-white">
@@ -202,7 +193,6 @@ const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }
             </table>
           </div>
 
-          {/* Campo de Assinatura */}
           <div className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-20">
             <div className="text-center space-y-4">
               <div className="border-t-2 border-slate-900 w-full mb-4"></div>
@@ -216,7 +206,6 @@ const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }
             </div>
           </div>
 
-          {/* Rodapé do Documento */}
           <div className="mt-auto pt-20 border-t border-slate-200 flex flex-col items-center gap-6">
             <div className="flex gap-8 text-[8px] font-black text-slate-400 uppercase tracking-[0.5em]">
               <span>VIA DO ALMOXARIFADO</span>
@@ -234,7 +223,6 @@ const ReceiptsView: React.FC<ReceiptsViewProps> = ({ history, setHistory, user }
     );
   }
 
-  // LISTAGEM DE RECIBOS (ABA PRINCIPAL)
   return (
     <div className="space-y-12 animate-fadeIn pb-24">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">

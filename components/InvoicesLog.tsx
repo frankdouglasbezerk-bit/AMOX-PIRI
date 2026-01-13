@@ -28,9 +28,9 @@ const InvoicesLog: React.FC<InvoicesLogProps> = ({ history, setHistory, user }) 
       return;
     }
 
-    const password = prompt("AUTENTICAÇÃO DE SEGURANÇA:\nDigite a SENHA DO ADM para apagar esta saída do relatório:");
+    const password = prompt("AUTENTICAÇÃO DE SEGURANÇA:\nDigite a SENHA DO ADM (2000) para apagar esta saída do relatório:");
     
-    if (password === '12345678910') {
+    if (password === '2000') {
       if (confirm('Deseja realmente apagar este registro de saída? Isso não reverte o saldo do estoque.')) {
         setHistory(prev => prev.filter(h => h.id !== id));
       }
@@ -101,7 +101,6 @@ const InvoicesLog: React.FC<InvoicesLogProps> = ({ history, setHistory, user }) 
                           <span className="text-white font-black text-[11px] uppercase tracking-tight leading-tight">{record.material}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Hash size={10} className="text-slate-700" />
                           <span className="text-[9px] text-slate-600 font-mono">SAP: {record.sap}</span>
                         </div>
                       </div>
